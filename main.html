@@ -5,35 +5,38 @@
   <title>Draggable Cubes</title>
   <style>
     body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background-color: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
     }
 
-    /* ✅ Added overflow to enable scrolling (scrollLeft test) */
-    .container.items {
+    .container {
       position: relative;
-      width: 400px; /* smaller width to enable horizontal scroll */
+      width: 500px;
       height: 500px;
-      background: #ddd;
-      overflow-x: scroll;
-      white-space: nowrap;
-      box-sizing: border-box;
+      background-color: #fff;
+      border: 3px solid #333;
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-template-rows: repeat(4, 100px);
+      gap: 10px;
       padding: 10px;
+      box-sizing: border-box;
     }
 
     .cube {
+      background-color: #3498db;
+      border-radius: 6px;
+      cursor: grab;
+      position: absolute;
+      transition: background-color 0.2s;
       width: 100px;
       height: 100px;
-      background-color: #3498db;
-      cursor: grab;
-      display: inline-block; /* horizontally scrollable */
-      margin-right: 10px;
-      position: relative;
-      transition: background-color 0.2s;
       user-select: none;
     }
 
@@ -45,57 +48,54 @@
 </head>
 <body>
 
-  <!-- ✅ Cypress-compatible: .items class added -->
-  <div class="container items" id="container">
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-    <div class="cube" style="left: 0;"></div>
-  </div>
+<div class="container" id="container">
+  <div class="cube" style="left: 10px; top: 10px;"></div>
+  <div class="cube" style="left: 120px; top: 10px;"></div>
+  <div class="cube" style="left: 230px; top: 10px;"></div>
+  <div class="cube" style="left: 340px; top: 10px;"></div>
+</div>
 
-  <script>
-    const container = document.getElementById('container');
-    const cubes = document.querySelectorAll('.cube');
+<script>
+  const container = document.getElementById('container');
+  const cubes = document.querySelectorAll('.cube');
+  let selectedCube = null;
+  let offsetX = 0;
+  let offsetY = 0;
 
-    let selectedCube = null;
-    let offsetX, offsetY;
+  cubes.forEach(cube => {
+    cube.addEventListener('mousedown', (e) => {
+      selectedCube = cube;
+      const rect = cube.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
 
-    cubes.forEach(cube => {
-      cube.addEventListener('mousedown', (e) => {
-        selectedCube = cube;
-        offsetX = e.clientX - cube.offsetLeft;
-        offsetY = e.clientY - cube.offsetTop;
-        cube.style.zIndex = 1000;
-      });
+      selectedCube.style.zIndex = 1000;
     });
+  });
 
-    document.addEventListener('mousemove', (e) => {
-      if (!selectedCube) return;
+  document.addEventListener('mousemove', (e) => {
+    if (!selectedCube) return;
 
-      let containerRect = container.getBoundingClientRect();
-      let newX = e.clientX - containerRect.left - offsetX;
-      let newY = e.clientY - containerRect.top - offsetY;
+    const containerRect = container.getBoundingClientRect();
+    let newX = e.clientX - containerRect.left - offsetX;
+    let newY = e.clientY - containerRect.top - offsetY;
 
-      newX = Math.max(0, Math.min(newX, container.clientWidth - selectedCube.offsetWidth));
-      newY = Math.max(0, Math.min(newY, container.clientHeight - selectedCube.offsetHeight));
+    // Clamp position within container bounds
+    newX = Math.max(0, Math.min(newX, container.clientWidth - selectedCube.offsetWidth));
+    newY = Math.max(0, Math.min(newY, container.clientHeight - selectedCube.offsetHeight));
 
-      selectedCube.style.position = 'absolute';
-      selectedCube.style.left = `${newX}px`;
-      selectedCube.style.top = `${newY}px`;
-    });
+    selectedCube.style.left = `${newX}px`;
+    selectedCube.style.top = `${newY}px`;
+  });
 
-    document.addEventListener('mouseup', () => {
-      if (selectedCube) {
-        selectedCube.style.zIndex = '';
-        selectedCube = null;
-      }
-    });
-  </script>
+  document.addEventListener('mouseup', () => {
+    if (selectedCube) {
+      selectedCube.style.zIndex = '';
+      selectedCube = null;
+    }
+  });
+</script>
 
 </body>
 </html>
