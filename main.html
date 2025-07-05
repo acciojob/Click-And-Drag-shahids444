@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Draggable Cubes</title>
   <style>
     body {
@@ -13,16 +13,16 @@
       background: #f0f0f0;
     }
 
-    .container {
+    /* ✅ Added overflow to enable scrolling (scrollLeft test) */
+    .container.items {
       position: relative;
-      width: 500px;
+      width: 400px; /* smaller width to enable horizontal scroll */
       height: 500px;
       background: #ddd;
-      display: grid;
-      grid-template-columns: repeat(4, 100px);
-      grid-gap: 10px;
-      padding: 10px;
+      overflow-x: scroll;
+      white-space: nowrap;
       box-sizing: border-box;
+      padding: 10px;
     }
 
     .cube {
@@ -30,7 +30,9 @@
       height: 100px;
       background-color: #3498db;
       cursor: grab;
-      position: absolute;
+      display: inline-block; /* horizontally scrollable */
+      margin-right: 10px;
+      position: relative;
       transition: background-color 0.2s;
       user-select: none;
     }
@@ -43,52 +45,57 @@
 </head>
 <body>
 
-<div class="container" id="container">
-  <div class="cube" style="left: 10px; top: 10px;"></div>
-  <div class="cube" style="left: 120px; top: 10px;"></div>
-  <div class="cube" style="left: 230px; top: 10px;"></div>
-  <div class="cube" style="left: 340px; top: 10px;"></div>
-</div>
+  <!-- ✅ Cypress-compatible: .items class added -->
+  <div class="container items" id="container">
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+    <div class="cube" style="left: 0;"></div>
+  </div>
 
-<script>
-  const container = document.getElementById('container');
-  const cubes = document.querySelectorAll('.cube');
+  <script>
+    const container = document.getElementById('container');
+    const cubes = document.querySelectorAll('.cube');
 
-  let selectedCube = null;
-  let offsetX, offsetY;
+    let selectedCube = null;
+    let offsetX, offsetY;
 
-  cubes.forEach(cube => {
-    cube.addEventListener('mousedown', (e) => {
-      selectedCube = cube;
-      offsetX = e.clientX - cube.offsetLeft;
-      offsetY = e.clientY - cube.offsetTop;
-
-      cube.style.zIndex = 1000;
+    cubes.forEach(cube => {
+      cube.addEventListener('mousedown', (e) => {
+        selectedCube = cube;
+        offsetX = e.clientX - cube.offsetLeft;
+        offsetY = e.clientY - cube.offsetTop;
+        cube.style.zIndex = 1000;
+      });
     });
-  });
 
-  document.addEventListener('mousemove', (e) => {
-    if (!selectedCube) return;
+    document.addEventListener('mousemove', (e) => {
+      if (!selectedCube) return;
 
-    let containerRect = container.getBoundingClientRect();
-    let newX = e.clientX - containerRect.left - offsetX;
-    let newY = e.clientY - containerRect.top - offsetY;
+      let containerRect = container.getBoundingClientRect();
+      let newX = e.clientX - containerRect.left - offsetX;
+      let newY = e.clientY - containerRect.top - offsetY;
 
-    // Clamp position within container
-    newX = Math.max(0, Math.min(newX, container.clientWidth - selectedCube.offsetWidth));
-    newY = Math.max(0, Math.min(newY, container.clientHeight - selectedCube.offsetHeight));
+      newX = Math.max(0, Math.min(newX, container.clientWidth - selectedCube.offsetWidth));
+      newY = Math.max(0, Math.min(newY, container.clientHeight - selectedCube.offsetHeight));
 
-    selectedCube.style.left = `${newX}px`;
-    selectedCube.style.top = `${newY}px`;
-  });
+      selectedCube.style.position = 'absolute';
+      selectedCube.style.left = `${newX}px`;
+      selectedCube.style.top = `${newY}px`;
+    });
 
-  document.addEventListener('mouseup', () => {
-    if (selectedCube) {
-      selectedCube.style.zIndex = '';
-      selectedCube = null;
-    }
-  });
-</script>
+    document.addEventListener('mouseup', () => {
+      if (selectedCube) {
+        selectedCube.style.zIndex = '';
+        selectedCube = null;
+      }
+    });
+  </script>
 
 </body>
 </html>
