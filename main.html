@@ -1,63 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Draggable Scrollable Items</title>
-  <style>
-    .items{
-      width:700px;           /* wide enough for pageX 493 */
-      height:100px;
-      overflow-x:scroll;
-      white-space:nowrap;
-      border:2px solid #000;
-      margin:300px auto 0;  /* down the page for pageY 391 */
-      cursor:grab;
-      user-select:none;
-    }
-    .items.active{cursor:grabbing;}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Draggable Cubes Demo</title>
 
-    .cube{
-      display:inline-block;
-      width:100px;height:100px;
-      background:#3498db;
-      margin-right:10px;
-    }
-  </style>
+<style>
+  /* ─── Layout & visuals ───────────────────────────────────────── */
+  body{
+    margin:0;padding:40px;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f5f5f5;
+    display:flex;justify-content:center;
+  }
+
+  /* The “play area” */
+  .container{
+    position:relative;      /* needed for absolute children */
+    width:640px;            /* 6×(100+margin) ≈ grid 3×2 */
+    height:420px;
+    border:4px solid #000;
+    background:#fff;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,100px);
+    grid-auto-rows:100px;
+    gap:20px;
+    padding:20px;
+    box-sizing:border-box;
+  }
+
+  .cube{
+    width:100px;height:100px;
+    background:#3498db;
+    border-radius:8px;
+    cursor:grab;
+    position:absolute;      /* becomes draggable */
+    user-select:none;
+    transition:box-shadow .15s;
+  }
+  .cube:active{cursor:grabbing;}
+  .cube.dragging{
+    box-shadow:0 12px 25px rgba(0,0,0,.2);
+    z-index:10;
+  }
+</style>
 </head>
 <body>
 
-<div class="items">
+<!-- ─── Any number of cubes here ─── -->
+<div class="container" id="playArea">
   <div class="cube"></div><div class="cube"></div><div class="cube"></div>
   <div class="cube"></div><div class="cube"></div><div class="cube"></div>
 </div>
 
 <script>
-  /* ---- click‑and‑drag scrolling ---- */
-  const strip  = document.querySelector('.items');
-  let isDown   = false;
-  let startX   = 0;
-  let scrollX0 = 0;
+/* ────────────────────────────────────────────────────────────────
+   Draggable‑within‑bounds logic
+────────────────────────────────────────────────────────────────── */
 
-  strip.addEventListener('mousedown', e=>{
-    isDown   = true;
-    strip.classList.add('active');
-    startX   = e.pageX - strip.offsetLeft;
-    scrollX0 = strip.scrollLeft;
-  });
+const container = document.getElementById('playArea');
+const cubes     = container.querySelectorAll('.cube');
 
-  document.addEventListener('mousemove', e=>{
-    if(!isDown) return;
-    const x     = e.pageX - strip.offsetLeft;
-    const walk  = (x - startX)*1.5;   // speed multiplier
-    strip.scrollLeft = scrollX0 - walk;
-  });
+/* 1️⃣  Place cubes in a neat grid on first load */
+function placeCubes() {
+  const gap   = 20;          // same as CSS gap
+  const size  = 100;         // cube width / height
+  const cols  = Math.floor(
+    (container.clientWidth - gap) / (size + gap)
+  );
 
-  ['mouseup','mouseleave'].forEach(evt=>{
-    document.addEventListener(evt, ()=>{
-      isDown = false;
-      strip.classList.remove('active');
-    });
+  cubes.forEach((cube, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    cube.style.left = `${gap + col * (size + gap)}px`;
+    cube.style.top  = `${gap + row * (size + gap)}px`;
   });
+}
+placeCubes();
+
+/* 2️⃣  Drag behaviour */
+cubes.forEach(cube => {
+  let offsetX = 0, offsetY = 0;   // mouse‑to‑corner offset
+
+  cube.addEventListener('mousedown', e => {
+    cube.classList.add('dragging');
+
+    /* difference between mouse pos & cube’s top/left */
+    offsetX = e.clientX - cube.offsetLeft;
+    offsetY = e.clientY - cube.offsetTop;
+
+    /* move on every mousemove until mouseup */
+    function onMouseMove(ev) {
+      /* raw coords relative to container */
+      let x = ev.clientX - offsetX;
+      let y = ev.clientY - offsetY;
+
+      /* 3️⃣  Clamp inside bounds */
+      const maxX = container.clientWidth  - cube.offsetWidth;
+      const maxY = container.clientHeight - cube.offsetHeight;
+
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+
+      cube.style.left = x + 'px';
+      cube.style.top  = y + 'px';
+    }
+
+    /* mouseup → stop dragging */
+    function onMouseUp() {
+      cube.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup',   onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup',   onMouseUp);
+  });
+});
+
+/* 4️⃣  Responsiveness: re‑flow the grid if container size changes */
+window.addEventListener('resize', placeCubes);
 </script>
 </body>
 </html>
