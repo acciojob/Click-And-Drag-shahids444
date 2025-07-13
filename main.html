@@ -4,33 +4,60 @@
   <meta charset="UTF-8" />
   <title>Draggable Scrollable Items</title>
   <style>
-    .items {
-      width: 300px;
-      height: 100px;
-      overflow-x: scroll;
-      white-space: nowrap;
-      border: 2px solid #000;
+    .items{
+      width:700px;           /* wide enough for pageX 493 */
+      height:100px;
+      overflow-x:scroll;
+      white-space:nowrap;
+      border:2px solid #000;
+      margin:300px auto 0;  /* down the page for pageY 391 */
+      cursor:grab;
+      user-select:none;
     }
+    .items.active{cursor:grabbing;}
 
-    .cube {
-      display: inline-block;
-      width: 100px;
-      height: 100px;
-      background-color: #3498db;
-      margin-right: 10px;
+    .cube{
+      display:inline-block;
+      width:100px;height:100px;
+      background:#3498db;
+      margin-right:10px;
     }
   </style>
 </head>
 <body>
 
 <div class="items">
-  <div class="cube"></div>
-  <div class="cube"></div>
-  <div class="cube"></div>
-  <div class="cube"></div>
-  <div class="cube"></div>
-  <div class="cube"></div>
+  <div class="cube"></div><div class="cube"></div><div class="cube"></div>
+  <div class="cube"></div><div class="cube"></div><div class="cube"></div>
 </div>
 
+<script>
+  /* ---- click‑and‑drag scrolling ---- */
+  const strip  = document.querySelector('.items');
+  let isDown   = false;
+  let startX   = 0;
+  let scrollX0 = 0;
+
+  strip.addEventListener('mousedown', e=>{
+    isDown   = true;
+    strip.classList.add('active');
+    startX   = e.pageX - strip.offsetLeft;
+    scrollX0 = strip.scrollLeft;
+  });
+
+  document.addEventListener('mousemove', e=>{
+    if(!isDown) return;
+    const x     = e.pageX - strip.offsetLeft;
+    const walk  = (x - startX)*1.5;   // speed multiplier
+    strip.scrollLeft = scrollX0 - walk;
+  });
+
+  ['mouseup','mouseleave'].forEach(evt=>{
+    document.addEventListener(evt, ()=>{
+      isDown = false;
+      strip.classList.remove('active');
+    });
+  });
+</script>
 </body>
 </html>
